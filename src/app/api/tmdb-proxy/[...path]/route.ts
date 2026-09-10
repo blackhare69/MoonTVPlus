@@ -6,8 +6,6 @@ import {
   fetchTmdb,
 } from '@/lib/tmdb-proxy';
 
-export const runtime = 'edge';
-
 type RouteContext = {
   params: {
     path: string[];
