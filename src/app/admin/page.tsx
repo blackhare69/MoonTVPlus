@@ -72,12 +72,14 @@ import { createPortal } from 'react-dom';
 import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { BookSource } from '@/lib/book.types';
+import type { HomepageSection } from '@/lib/homepage-sections';
 import {
   ALL_FEATURE_PERMISSION_KEYS,
   FEATURE_PERMISSION_OPTIONS,
 } from '@/lib/feature-permissions';
 
 import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent';
+import HomepageSectionsEditor from '@/components/admin/HomepageSectionsEditor';
 import CorrectDialog from '@/components/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
 import PageLayout from '@/components/PageLayout';
@@ -375,17 +377,14 @@ interface SiteConfig {
   TMDBProxy?: string;
   TMDBReverseProxy?: string;
   TMDBImageBaseUrl?: string;
-  BangumiDataSource?:
-    | 'direct'
-    | 'server-proxy'
-    | 'custom-baseurl'
-    | 'sakura';
+  BangumiDataSource?: 'direct' | 'server-proxy' | 'custom-baseurl' | 'sakura';
   BangumiApiBaseUrl?: string;
   BangumiImageBaseUrl?: string;
   BangumiProxy?: string;
   LiveChartProxy?: string;
   BannerDataSource?: string;
   RecommendationDataSource?: string;
+  HomepageSections?: HomepageSection[];
   LocalSettingsSyncMode?: 'off' | 'manual' | 'auto';
   PansouApiUrl?: string;
   PansouUsername?: string;
@@ -4187,7 +4186,8 @@ const OpenListConfigComponent = ({
                 </div>
 
                 <div className='px-5 py-3 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800'>
-                  填写目录路径即可作用于其下所有影片（如 /videos）。更具体的路径优先。改完后点「保存配置」才会生效。
+                  填写目录路径即可作用于其下所有影片（如
+                  /videos）。更具体的路径优先。改完后点「保存配置」才会生效。
                 </div>
 
                 <div className='flex-1 overflow-y-auto px-5 py-4 space-y-2'>
@@ -4420,7 +4420,9 @@ const OpenListConfigComponent = ({
                   <button
                     type='button'
                     onClick={() => {
-                      if (pathMetaRows.some((row) => !(row.path || '').trim())) {
+                      if (
+                        pathMetaRows.some((row) => !(row.path || '').trim())
+                      ) {
                         showError('路径不能为空', showAlert);
                         return;
                       }
@@ -6622,7 +6624,9 @@ const EmbyConfigComponent = ({
                   className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
                 />
                 <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                  仅用于账号认证登录请求，示例：MediaBrowser Client=&quot;moontvplus&quot;, Device=&quot;Web&quot;, DeviceId=&quot;moontvplus-web&quot;, Version=&quot;1.0.0&quot;
+                  仅用于账号认证登录请求，示例：MediaBrowser
+                  Client=&quot;moontvplus&quot;, Device=&quot;Web&quot;,
+                  DeviceId=&quot;moontvplus-web&quot;, Version=&quot;1.0.0&quot;
                 </p>
               </div>
             </div>
@@ -6723,9 +6727,14 @@ const VideoSourceConfig = ({
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [showSpecialSourcesModal, setShowSpecialSourcesModal] = useState(false);
-  const [showClientAdSourcesModal, setShowClientAdSourcesModal] = useState(false);
-  const [specialSourceDraftApis, setSpecialSourceDraftApis] = useState<string[]>([]);
-  const [clientAdSourceDraftApis, setClientAdSourceDraftApis] = useState<string[]>([]);
+  const [showClientAdSourcesModal, setShowClientAdSourcesModal] =
+    useState(false);
+  const [specialSourceDraftApis, setSpecialSourceDraftApis] = useState<
+    string[]
+  >([]);
+  const [clientAdSourceDraftApis, setClientAdSourceDraftApis] = useState<
+    string[]
+  >([]);
   const [weightDraftSources, setWeightDraftSources] = useState<DataSource[]>(
     []
   );
@@ -6858,7 +6867,6 @@ const VideoSourceConfig = ({
       console.error('操作失败', 'toggle_proxy_mode', key);
     });
   };
-
 
   const openSpecialSourcesModal = () => {
     setSpecialSourceDraftApis(config?.SpecialSourceApis || []);
@@ -7950,7 +7958,6 @@ const VideoSourceConfig = ({
         </table>
       </div>
 
-
       {showSpecialSourcesModal &&
         createPortal(
           <div
@@ -7967,7 +7974,8 @@ const VideoSourceConfig = ({
                     特殊源设置
                   </h3>
                   <p className='mt-1 text-sm text-gray-600 dark:text-gray-400'>
-                    选中的视频源默认对普通搜索隐藏，仅在当前设备访问 /special 开启后参与普通 Web 搜索。
+                    选中的视频源默认对普通搜索隐藏，仅在当前设备访问 /special
+                    开启后参与普通 Web 搜索。
                   </p>
                 </div>
                 <button
@@ -7985,7 +7993,8 @@ const VideoSourceConfig = ({
                     配置说明
                   </div>
                   <p className='mt-1 text-sm text-rose-700 dark:text-rose-400'>
-                    这里维护的是特殊源列表，不是用户权限；TVBox、OrionTV、WebTV 始终不会使用这些特殊源。
+                    这里维护的是特殊源列表，不是用户权限；TVBox、OrionTV、WebTV
+                    始终不会使用这些特殊源。
                   </p>
                 </div>
 
@@ -8001,7 +8010,9 @@ const VideoSourceConfig = ({
                         onChange={(e) => {
                           if (e.target.checked) {
                             setSpecialSourceDraftApis((prev) =>
-                              prev.includes(source.key) ? prev : [...prev, source.key]
+                              prev.includes(source.key)
+                                ? prev
+                                : [...prev, source.key]
                             );
                           } else {
                             setSpecialSourceDraftApis((prev) =>
@@ -8035,9 +8046,9 @@ const VideoSourceConfig = ({
                   <button
                     onClick={() => {
                       const allApis =
-                        config?.SourceConfig?.filter((source) => !source.disabled).map(
-                          (source) => source.key
-                        ) || [];
+                        config?.SourceConfig?.filter(
+                          (source) => !source.disabled
+                        ).map((source) => source.key) || [];
                       setSpecialSourceDraftApis(allApis);
                     }}
                     className={buttonStyles.quickAction}
@@ -8052,7 +8063,10 @@ const VideoSourceConfig = ({
                       {specialSourceDraftApis.length} 个源
                     </span>
                   </span>
-                  <button onClick={closeSpecialSourcesModal} className={buttonStyles.secondary}>
+                  <button
+                    onClick={closeSpecialSourcesModal}
+                    className={buttonStyles.secondary}
+                  >
                     取消
                   </button>
                   <button
@@ -8089,7 +8103,8 @@ const VideoSourceConfig = ({
                     客户端去广告配置
                   </h3>
                   <p className='mt-1 text-sm text-gray-600 dark:text-gray-400'>
-                    勾选后，用户使用 MoonTVPlus APP 或 OrionTV 观看这些视频源时，会自动过滤片头/插播广告。
+                    勾选后，用户使用 MoonTVPlus APP 或 OrionTV
+                    观看这些视频源时，会自动过滤片头/插播广告。
                   </p>
                 </div>
                 <button
@@ -8114,7 +8129,9 @@ const VideoSourceConfig = ({
                         onChange={(e) => {
                           if (e.target.checked) {
                             setClientAdSourceDraftApis((prev) =>
-                              prev.includes(source.key) ? prev : [...prev, source.key]
+                              prev.includes(source.key)
+                                ? prev
+                                : [...prev, source.key]
                             );
                           } else {
                             setClientAdSourceDraftApis((prev) =>
@@ -8148,9 +8165,9 @@ const VideoSourceConfig = ({
                   <button
                     onClick={() => {
                       const allApis =
-                        config?.SourceConfig?.filter((source) => !source.disabled).map(
-                          (source) => source.key
-                        ) || [];
+                        config?.SourceConfig?.filter(
+                          (source) => !source.disabled
+                        ).map((source) => source.key) || [];
                       setClientAdSourceDraftApis(allApis);
                     }}
                     className={buttonStyles.quickAction}
@@ -8165,7 +8182,10 @@ const VideoSourceConfig = ({
                       {clientAdSourceDraftApis.length} 个源
                     </span>
                   </span>
-                  <button onClick={closeClientAdSourcesModal} className={buttonStyles.secondary}>
+                  <button
+                    onClick={closeClientAdSourcesModal}
+                    className={buttonStyles.secondary}
+                  >
                     取消
                   </button>
                   <button
@@ -10705,6 +10725,7 @@ const SiteConfigComponent = ({
     LiveChartProxy: '',
     BannerDataSource: 'Douban',
     RecommendationDataSource: 'Mixed',
+    HomepageSections: [],
     LocalSettingsSyncMode: 'off',
     PansouApiUrl: '',
     PansouUsername: '',
@@ -10834,6 +10855,7 @@ const SiteConfigComponent = ({
         BannerDataSource: config.SiteConfig.BannerDataSource || 'Douban',
         RecommendationDataSource:
           config.SiteConfig.RecommendationDataSource || 'Mixed',
+        HomepageSections: config.SiteConfig.HomepageSections || [],
         LocalSettingsSyncMode: config.SiteConfig.LocalSettingsSyncMode || 'off',
         PansouApiUrl: config.SiteConfig.PansouApiUrl || '',
         PansouUsername: config.SiteConfig.PansouUsername || '',
@@ -11463,6 +11485,13 @@ const SiteConfigComponent = ({
               选择详情页"更多推荐"的数据来源。混合模式会根据豆瓣ID和评论开关自动切换数据源
             </p>
           </div>
+
+          <HomepageSectionsEditor
+            value={siteSettings.HomepageSections || []}
+            onChange={(HomepageSections) =>
+              setSiteSettings((prev) => ({ ...prev, HomepageSections }))
+            }
+          />
         </div>
       </details>
 
@@ -11703,8 +11732,8 @@ const SiteConfigComponent = ({
               className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              用户未在本地数据源设置中配置 TMDB 图片地址时，图片默认使用该地址（默认
-              https://image.tmdb.org）
+              用户未在本地数据源设置中配置 TMDB
+              图片地址时，图片默认使用该地址（默认 https://image.tmdb.org）
             </p>
           </div>
         </div>
@@ -11853,8 +11882,8 @@ const SiteConfigComponent = ({
                   Bangumi Cloudflare Workers 代理脚本
                 </label>
                 <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                  复制后粘贴到 Cloudflare Workers，部署后的域名可填入
-                  Bangumi Base URL 和 Bangumi 图片 Base URL。
+                  复制后粘贴到 Cloudflare Workers，部署后的域名可填入 Bangumi
+                  Base URL 和 Bangumi 图片 Base URL。
                 </p>
               </div>
               <div className='flex shrink-0 items-center gap-2'>
@@ -12162,7 +12191,8 @@ const SiteConfigComponent = ({
                 启用流量统计
               </label>
               <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                开启后将在页面中注入统计脚本，支持 Umami、Google Analytics 和自定义代码
+                开启后将在页面中注入统计脚本，支持 Umami、Google Analytics
+                和自定义代码
               </p>
             </div>
             <button
@@ -12203,14 +12233,20 @@ const SiteConfigComponent = ({
                   onChange={(e) =>
                     setSiteSettings((prev) => ({
                       ...prev,
-                      AnalyticsProvider: e.target.value as 'umami' | 'google' | 'clarity' | 'custom',
+                      AnalyticsProvider: e.target.value as
+                        | 'umami'
+                        | 'google'
+                        | 'clarity'
+                        | 'custom',
                     }))
                   }
                   className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
                 >
                   <option value='umami'>Umami（开源，自托管）</option>
                   <option value='google'>Google Analytics</option>
-                  <option value='clarity'>Microsoft Clarity（免费，热力图+会话回放）</option>
+                  <option value='clarity'>
+                    Microsoft Clarity（免费，热力图+会话回放）
+                  </option>
                   <option value='custom'>自定义代码</option>
                 </select>
               </div>
@@ -12278,7 +12314,8 @@ const SiteConfigComponent = ({
                     className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
                   />
                   <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                    Google Analytics 4 的 Measurement ID，在 GA 后台「数据流」中获取
+                    Google Analytics 4 的 Measurement ID，在 GA
+                    后台「数据流」中获取
                   </p>
                 </div>
               )}
@@ -12301,7 +12338,8 @@ const SiteConfigComponent = ({
                     className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
                   />
                   <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                    Microsoft Clarity 的 Project ID，在 clarity.microsoft.com 项目设置中获取
+                    Microsoft Clarity 的 Project ID，在 clarity.microsoft.com
+                    项目设置中获取
                   </p>
                 </div>
               )}
@@ -12324,7 +12362,8 @@ const SiteConfigComponent = ({
                     className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
                   />
                   <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                    支持任意第三方统计服务的脚本代码，将直接注入到页面 &lt;head&gt; 中
+                    支持任意第三方统计服务的脚本代码，将直接注入到页面
+                    &lt;head&gt; 中
                   </p>
                 </div>
               )}
@@ -14942,7 +14981,6 @@ const XiaoyaConfigComponent = ({
   );
 };
 
-
 // Telegram Bot 配置组件
 const TelegramConfigComponent = ({
   config,
@@ -15010,7 +15048,10 @@ const TelegramConfigComponent = ({
         showSuccess('Telegram 配置保存成功', showAlert);
         await refreshConfig();
       } catch (error) {
-        showError(error instanceof Error ? error.message : '保存失败', showAlert);
+        showError(
+          error instanceof Error ? error.message : '保存失败',
+          showAlert
+        );
         throw error;
       }
     });
@@ -15026,9 +15067,10 @@ const TelegramConfigComponent = ({
           throw new Error('请先填写 Bot Token、Bot 用户名 和 Webhook Secret');
         }
 
-        const webhookUrlValue = webhookSecret === '******'
-          ? ''
-          : `${window.location.origin}/api/telegram/webhook/${webhookSecret}`;
+        const webhookUrlValue =
+          webhookSecret === '******'
+            ? ''
+            : `${window.location.origin}/api/telegram/webhook/${webhookSecret}`;
         const response = await fetch('/api/admin/telegram', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -15042,13 +15084,20 @@ const TelegramConfigComponent = ({
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
           const telegramDetail = data.telegram
-            ? `（HTTP ${data.telegram.status || '-'}，响应：${data.telegram.body || data.telegram.statusText || '-'}）`
+            ? `（HTTP ${data.telegram.status || '-'}，响应：${
+                data.telegram.body || data.telegram.statusText || '-'
+              }）`
             : '';
-          throw new Error(`${data.error || 'Webhook 设置失败'}${telegramDetail}`);
+          throw new Error(
+            `${data.error || 'Webhook 设置失败'}${telegramDetail}`
+          );
         }
         showSuccess('Webhook 设置成功', showAlert);
       } catch (error) {
-        showError(error instanceof Error ? error.message : 'Webhook 设置失败', showAlert);
+        showError(
+          error instanceof Error ? error.message : 'Webhook 设置失败',
+          showAlert
+        );
         throw error;
       }
     });
@@ -15065,20 +15114,31 @@ const TelegramConfigComponent = ({
         const response = await fetch('/api/admin/telegram', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'test', config: buildConfig(), testChatId: testChatId.trim() }),
+          body: JSON.stringify({
+            action: 'test',
+            config: buildConfig(),
+            testChatId: testChatId.trim(),
+          }),
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || '发送失败');
         showSuccess('测试消息发送成功', showAlert);
       } catch (error) {
-        showError(error instanceof Error ? error.message : '发送失败', showAlert);
+        showError(
+          error instanceof Error ? error.message : '发送失败',
+          showAlert
+        );
         throw error;
       }
     });
   };
 
   const webhookUrl = webhookSecret
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/telegram/webhook/${webhookSecret === '******' ? '<secret>' : webhookSecret}`
+    ? `${
+        typeof window !== 'undefined' ? window.location.origin : ''
+      }/api/telegram/webhook/${
+        webhookSecret === '******' ? '<secret>' : webhookSecret
+      }`
     : '';
 
   return (
@@ -15089,7 +15149,10 @@ const TelegramConfigComponent = ({
         </h3>
         <div className='text-sm text-sky-800 dark:text-sky-200 space-y-1'>
           <p>• 支持用户绑定 Telegram、快捷确认登录和站内通知推送</p>
-          <p>• 开启 Telegram 注册后，用户可在 Bot 中发送 /register 用户名 密码 注册账号</p>
+          <p>
+            • 开启 Telegram 注册后，用户可在 Bot 中发送 /register 用户名 密码
+            注册账号
+          </p>
           <p>• Webhook 地址需在 Telegram Bot API 中手动设置</p>
           <p>• Bot Token 和 Webhook Secret 仅服务端保存，不会暴露给前端</p>
         </div>
@@ -15098,47 +15161,113 @@ const TelegramConfigComponent = ({
       <div className='space-y-4'>
         <div className='flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700'>
           <div>
-            <h3 className='text-sm font-medium text-gray-900 dark:text-white'>启用 Telegram Bot</h3>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>开启后显示绑定与 Telegram 登录入口</p>
+            <h3 className='text-sm font-medium text-gray-900 dark:text-white'>
+              启用 Telegram Bot
+            </h3>
+            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              开启后显示绑定与 Telegram 登录入口
+            </p>
           </div>
           <button
             onClick={() => setEnabled(!enabled)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'}`}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+            }`}
           >
-            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                enabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
           </button>
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>Bot Token *</label>
-            <input type='password' value={botToken} onChange={(e) => setBotToken(e.target.value)} placeholder='123456:ABC...' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
+            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              Bot Token *
+            </label>
+            <input
+              type='password'
+              value={botToken}
+              onChange={(e) => setBotToken(e.target.value)}
+              placeholder='123456:ABC...'
+              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+            />
           </div>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>Bot 用户名 *</label>
-            <input type='text' value={botUsername} onChange={(e) => setBotUsername(e.target.value)} placeholder='your_bot' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
+            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              Bot 用户名 *
+            </label>
+            <input
+              type='text'
+              value={botUsername}
+              onChange={(e) => setBotUsername(e.target.value)}
+              placeholder='your_bot'
+              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+            />
           </div>
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>Webhook Secret</label>
-          <input type='password' value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder='建议填写随机长字符串' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
-          {webhookUrl && <p className='mt-2 break-all text-xs text-gray-500 dark:text-gray-400'>Webhook URL：{webhookUrl}</p>}
+          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+            Webhook Secret
+          </label>
+          <input
+            type='password'
+            value={webhookSecret}
+            onChange={(e) => setWebhookSecret(e.target.value)}
+            placeholder='建议填写随机长字符串'
+            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+          />
+          {webhookUrl && (
+            <p className='mt-2 break-all text-xs text-gray-500 dark:text-gray-400'>
+              Webhook URL：{webhookUrl}
+            </p>
+          )}
           <div className='mt-3 flex flex-col gap-2 sm:flex-row'>
-            <button onClick={handleSetWebhook} disabled={isLoading('setTelegramWebhook')} className={`w-full sm:w-auto ${buttonStyles.primary}`}>{isLoading('setTelegramWebhook') ? '设置中...' : '一键设置 Webhook'}</button>
+            <button
+              onClick={handleSetWebhook}
+              disabled={isLoading('setTelegramWebhook')}
+              className={`w-full sm:w-auto ${buttonStyles.primary}`}
+            >
+              {isLoading('setTelegramWebhook')
+                ? '设置中...'
+                : '一键设置 Webhook'}
+            </button>
           </div>
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>系统代理</label>
-            <input type='text' value={apiProxy} onChange={(e) => setApiProxy(e.target.value)} placeholder='http://127.0.0.1:7890' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>Node 部署可用；Cloudflare/Edge 环境会忽略。</p>
+            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              系统代理
+            </label>
+            <input
+              type='text'
+              value={apiProxy}
+              onChange={(e) => setApiProxy(e.target.value)}
+              placeholder='http://127.0.0.1:7890'
+              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+            />
+            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              Node 部署可用；Cloudflare/Edge 环境会忽略。
+            </p>
           </div>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>反代 Base URL</label>
-            <input type='text' value={apiBaseUrl} onChange={(e) => setApiBaseUrl(e.target.value)} placeholder='https://telegram-api.example.com' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>用于替换 https://api.telegram.org。</p>
+            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              反代 Base URL
+            </label>
+            <input
+              type='text'
+              value={apiBaseUrl}
+              onChange={(e) => setApiBaseUrl(e.target.value)}
+              placeholder='https://telegram-api.example.com'
+              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+            />
+            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              用于替换 https://api.telegram.org。
+            </p>
           </div>
         </div>
 
@@ -15147,26 +15276,61 @@ const TelegramConfigComponent = ({
             ['允许绑定', bindingEnabled, setBindingEnabled],
             ['允许 Telegram 注册', registrationEnabled, setRegistrationEnabled],
             ['允许 Telegram 登录', loginEnabled, setLoginEnabled],
-            ['启用 Telegram 通知', notificationsEnabled, setNotificationsEnabled],
-            ['新绑定默认开启通知', defaultNotifications, setDefaultNotifications],
+            [
+              '启用 Telegram 通知',
+              notificationsEnabled,
+              setNotificationsEnabled,
+            ],
+            [
+              '新绑定默认开启通知',
+              defaultNotifications,
+              setDefaultNotifications,
+            ],
           ].map(([label, value, setter]) => (
-            <label key={label as string} className='flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300'>
-              <input type='checkbox' checked={value as boolean} onChange={(e) => (setter as (value: boolean) => void)(e.target.checked)} />
+            <label
+              key={label as string}
+              className='flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300'
+            >
+              <input
+                type='checkbox'
+                checked={value as boolean}
+                onChange={(e) =>
+                  (setter as (value: boolean) => void)(e.target.checked)
+                }
+              />
               {label as string}
             </label>
           ))}
         </div>
 
         <div className='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>测试 Chat ID</label>
+          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+            测试 Chat ID
+          </label>
           <div className='flex flex-col gap-2 sm:flex-row'>
-            <input type='text' value={testChatId} onChange={(e) => setTestChatId(e.target.value)} placeholder='用户或群组 chat_id' className='min-w-0 flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
-            <button onClick={handleTest} disabled={isLoading('testTelegram')} className={`w-full shrink-0 sm:w-auto ${buttonStyles.primary}`}>{isLoading('testTelegram') ? '发送中...' : '测试'}</button>
+            <input
+              type='text'
+              value={testChatId}
+              onChange={(e) => setTestChatId(e.target.value)}
+              placeholder='用户或群组 chat_id'
+              className='min-w-0 flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+            />
+            <button
+              onClick={handleTest}
+              disabled={isLoading('testTelegram')}
+              className={`w-full shrink-0 sm:w-auto ${buttonStyles.primary}`}
+            >
+              {isLoading('testTelegram') ? '发送中...' : '测试'}
+            </button>
           </div>
         </div>
 
         <div className='flex justify-end'>
-          <button onClick={handleSave} disabled={isLoading('saveTelegram')} className={buttonStyles.success}>
+          <button
+            onClick={handleSave}
+            disabled={isLoading('saveTelegram')}
+            className={buttonStyles.success}
+          >
             {isLoading('saveTelegram') ? '保存中...' : '保存配置'}
           </button>
         </div>
@@ -16162,248 +16326,260 @@ const AIConfigComponent = ({
       {/* 旧版 AI模型配置（仅旧版显示） */}
       {!enableNewMode && (
         <>
-      <div className='space-y-4'>
-        <h3 className='text-base font-semibold text-gray-900 dark:text-gray-100'>
-          AI模型配置
-        </h3>
-        <p className='text-sm text-gray-500 dark:text-gray-400'>
-          请配置兼容OpenAI格式的API
-        </p>
-        <div className='space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg'>
-          <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
-            自定义 API 配置
-          </h4>
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              API Key <span className='text-red-500'>*</span>
-            </label>
-            <input
-              type='password'
-              value={customApiKey}
-              onChange={(e) => setCustomApiKey(e.target.value)}
-              placeholder='your-api-key'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-            />
-          </div>
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              Base URL <span className='text-red-500'>*</span>
-            </label>
-            <input
-              type='text'
-              value={customBaseURL}
-              onChange={(e) => setCustomBaseURL(e.target.value)}
-              placeholder='https://your-api.example.com/v1'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-            />
-          </div>
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              模型名称 <span className='text-red-500'>*</span>
-            </label>
-            <input
-              type='text'
-              value={customModel}
-              onChange={(e) => setCustomModel(e.target.value)}
-              placeholder='model-name'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 旧版 决策模型配置（仅旧版显示） */}
-      <div className='space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
-        <div>
-          <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
-            AI决策模型配置
-          </h4>
-          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-            使用AI智能判断是否需要联网搜索、豆瓣或TMDB数据,并优化搜索关键词(复用主模型的API配置)
-          </p>
-        </div>
-
-        <div className='space-y-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg'>
-          <div>
-            <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-              决策模型名称
-            </label>
-            <input
-              type='text'
-              value={decisionCustomModel}
-              onChange={(e) => setDecisionCustomModel(e.target.value)}
-              placeholder='gpt-4o-mini (建议使用成本较低的小模型)'
-              className='w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-            />
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-              留空则使用传统关键词匹配方式,不进行AI决策
+          <div className='space-y-4'>
+            <h3 className='text-base font-semibold text-gray-900 dark:text-gray-100'>
+              AI模型配置
+            </h3>
+            <p className='text-sm text-gray-500 dark:text-gray-400'>
+              请配置兼容OpenAI格式的API
             </p>
+            <div className='space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg'>
+              <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+                自定义 API 配置
+              </h4>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  API Key <span className='text-red-500'>*</span>
+                </label>
+                <input
+                  type='password'
+                  value={customApiKey}
+                  onChange={(e) => setCustomApiKey(e.target.value)}
+                  placeholder='your-api-key'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  Base URL <span className='text-red-500'>*</span>
+                </label>
+                <input
+                  type='text'
+                  value={customBaseURL}
+                  onChange={(e) => setCustomBaseURL(e.target.value)}
+                  placeholder='https://your-api.example.com/v1'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  模型名称 <span className='text-red-500'>*</span>
+                </label>
+                <input
+                  type='text'
+                  value={customModel}
+                  onChange={(e) => setCustomModel(e.target.value)}
+                  placeholder='model-name'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                />
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
-          <p className='text-xs text-blue-700 dark:text-blue-400'>
-            💡 <strong>提示:</strong>{' '}
-            决策模型用于智能判断是否需要调用各个数据源,建议使用成本较低的小模型(如
-            gpt-4o-mini)。会复用主模型的API Key和Base URL配置。
-          </p>
-        </div>
-      </div>
-      </>
+          {/* 旧版 决策模型配置（仅旧版显示） */}
+          <div className='space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
+            <div>
+              <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+                AI决策模型配置
+              </h4>
+              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                使用AI智能判断是否需要联网搜索、豆瓣或TMDB数据,并优化搜索关键词(复用主模型的API配置)
+              </p>
+            </div>
+
+            <div className='space-y-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg'>
+              <div>
+                <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  决策模型名称
+                </label>
+                <input
+                  type='text'
+                  value={decisionCustomModel}
+                  onChange={(e) => setDecisionCustomModel(e.target.value)}
+                  placeholder='gpt-4o-mini (建议使用成本较低的小模型)'
+                  className='w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                />
+                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                  留空则使用传统关键词匹配方式,不进行AI决策
+                </p>
+              </div>
+            </div>
+
+            <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
+              <p className='text-xs text-blue-700 dark:text-blue-400'>
+                💡 <strong>提示:</strong>{' '}
+                决策模型用于智能判断是否需要调用各个数据源,建议使用成本较低的小模型(如
+                gpt-4o-mini)。会复用主模型的API Key和Base URL配置。
+              </p>
+            </div>
+          </div>
+        </>
       )}
 
       {/* 新版 调用配置（仅新版显示） */}
       {enableNewMode && (
-      <div className='space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
-        <div>
-          <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
-            新版调用配置
-          </h4>
-          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-            由模型自主决定是否调用相关工具
-          </p>
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-            调用协议
-          </label>
-          <select
-            value={newProtocol}
-            onChange={(e) => setNewProtocol(e.target.value as any)}
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-          >
-            <option value='openai-completions'>OpenAI 普通协议 (chat/completions)</option>
-            <option value='openai-responses'>OpenAI Response 协议 (/responses)</option>
-            <option value='claude'>Claude Messages 协议 (/v1/messages)</option>
-          </select>
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-            最大上下文Token数
-          </label>
-          <input
-            type='number'
-            min='1024'
-            step='1024'
-            value={maxContext}
-            onChange={(e) => setMaxContext(parseInt(e.target.value) || 131072)}
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-          />
-          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-            上下文窗口 token 上限，默认 131072（128k）
-          </p>
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-            上下文压缩触发阈值 (%)
-          </label>
-          <input
-            type='number'
-            min='0'
-            max='100'
-            step='1'
-            value={compressThreshold}
-            onChange={(e) => setCompressThreshold(parseInt(e.target.value) || 0)}
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-          />
-          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-            超出后调用 LLM 将较早的工具调用摘要化并丢弃工具消息；0=关闭压缩
-          </p>
-        </div>
-
-        {(newProtocol === 'openai-completions' || newProtocol === 'openai-responses') && (
-          <div className='space-y-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                OpenAI API Key
-              </label>
-              <input
-                type='password'
-                value={openaiApiKey}
-                onChange={(e) => setOpenaiApiKey(e.target.value)}
-                placeholder='sk-...'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                OpenAI Base URL
-              </label>
-              <input
-                type='text'
-                value={openaiBaseURL}
-                onChange={(e) => setOpenaiBaseURL(e.target.value)}
-                placeholder='https://api.openai.com'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                OpenAI 模型
-              </label>
-              <input
-                type='text'
-                value={openaiModel}
-                onChange={(e) => setOpenaiModel(e.target.value)}
-                placeholder='gpt-4o-mini'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-            </div>
+        <div className='space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
+          <div>
+            <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+              新版调用配置
+            </h4>
+            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              由模型自主决定是否调用相关工具
+            </p>
           </div>
-        )}
 
-        {newProtocol === 'claude' && (
-          <div className='space-y-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                Claude API Key
-              </label>
-              <input
-                type='password'
-                value={claudeApiKey}
-                onChange={(e) => setClaudeApiKey(e.target.value)}
-                placeholder='sk-ant-...'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                Claude Base URL
-              </label>
-              <input
-                type='text'
-                value={claudeBaseURL}
-                onChange={(e) => setClaudeBaseURL(e.target.value)}
-                placeholder='https://api.anthropic.com'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                Claude 模型
-              </label>
-              <input
-                type='text'
-                value={claudeModel}
-                onChange={(e) => setClaudeModel(e.target.value)}
-                placeholder='claude-sonnet-4-6'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-            </div>
+          <div>
+            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              调用协议
+            </label>
+            <select
+              value={newProtocol}
+              onChange={(e) => setNewProtocol(e.target.value as any)}
+              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+            >
+              <option value='openai-completions'>
+                OpenAI 普通协议 (chat/completions)
+              </option>
+              <option value='openai-responses'>
+                OpenAI Response 协议 (/responses)
+              </option>
+              <option value='claude'>
+                Claude Messages 协议 (/v1/messages)
+              </option>
+            </select>
           </div>
-        )}
 
-        <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
-          <p className='text-xs text-blue-700 dark:text-blue-400'>
-            💡 <strong>提示:</strong> 由模型自主决定是否调用相关工具。
-            需在站点设置中配置 TMDB API Key（TMDB 工具）、
-            在下方「启用联网搜索」中配置对应搜索服务 API Key（联网搜索工具）。豆瓣工具始终可用。
-          </p>
+          <div>
+            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              最大上下文Token数
+            </label>
+            <input
+              type='number'
+              min='1024'
+              step='1024'
+              value={maxContext}
+              onChange={(e) =>
+                setMaxContext(parseInt(e.target.value) || 131072)
+              }
+              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+            />
+            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              上下文窗口 token 上限，默认 131072（128k）
+            </p>
+          </div>
+
+          <div>
+            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              上下文压缩触发阈值 (%)
+            </label>
+            <input
+              type='number'
+              min='0'
+              max='100'
+              step='1'
+              value={compressThreshold}
+              onChange={(e) =>
+                setCompressThreshold(parseInt(e.target.value) || 0)
+              }
+              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+            />
+            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              超出后调用 LLM 将较早的工具调用摘要化并丢弃工具消息；0=关闭压缩
+            </p>
+          </div>
+
+          {(newProtocol === 'openai-completions' ||
+            newProtocol === 'openai-responses') && (
+            <div className='space-y-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg'>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  OpenAI API Key
+                </label>
+                <input
+                  type='password'
+                  value={openaiApiKey}
+                  onChange={(e) => setOpenaiApiKey(e.target.value)}
+                  placeholder='sk-...'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  OpenAI Base URL
+                </label>
+                <input
+                  type='text'
+                  value={openaiBaseURL}
+                  onChange={(e) => setOpenaiBaseURL(e.target.value)}
+                  placeholder='https://api.openai.com'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  OpenAI 模型
+                </label>
+                <input
+                  type='text'
+                  value={openaiModel}
+                  onChange={(e) => setOpenaiModel(e.target.value)}
+                  placeholder='gpt-4o-mini'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                />
+              </div>
+            </div>
+          )}
+
+          {newProtocol === 'claude' && (
+            <div className='space-y-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg'>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  Claude API Key
+                </label>
+                <input
+                  type='password'
+                  value={claudeApiKey}
+                  onChange={(e) => setClaudeApiKey(e.target.value)}
+                  placeholder='sk-ant-...'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  Claude Base URL
+                </label>
+                <input
+                  type='text'
+                  value={claudeBaseURL}
+                  onChange={(e) => setClaudeBaseURL(e.target.value)}
+                  placeholder='https://api.anthropic.com'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  Claude 模型
+                </label>
+                <input
+                  type='text'
+                  value={claudeModel}
+                  onChange={(e) => setClaudeModel(e.target.value)}
+                  placeholder='claude-sonnet-4-6'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                />
+              </div>
+            </div>
+          )}
+
+          <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
+            <p className='text-xs text-blue-700 dark:text-blue-400'>
+              💡 <strong>提示:</strong> 由模型自主决定是否调用相关工具。
+              需在站点设置中配置 TMDB API Key（TMDB 工具）、
+              在下方「启用联网搜索」中配置对应搜索服务 API
+              Key（联网搜索工具）。豆瓣工具始终可用。
+            </p>
+          </div>
         </div>
-      </div>
       )}
 
       {/* 联网搜索配置 */}

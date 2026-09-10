@@ -5,6 +5,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import {
+  normalizeHomepageSections,
+  validateHomepageSections,
+} from '@/lib/homepage-sections';
 import { normalizeApiBaseUrl } from '@/lib/url';
 
 export const runtime = 'nodejs';
@@ -56,6 +60,7 @@ export async function POST(request: NextRequest) {
       LiveChartProxy,
       BannerDataSource,
       RecommendationDataSource,
+      HomepageSections,
       LocalSettingsSyncMode,
       PansouApiUrl,
       PansouUsername,
@@ -123,6 +128,7 @@ export async function POST(request: NextRequest) {
       LiveChartProxy?: string;
       BannerDataSource?: string;
       RecommendationDataSource?: string;
+      HomepageSections?: unknown;
       LocalSettingsSyncMode?: 'off' | 'manual' | 'auto';
       PansouApiUrl?: string;
       PansouUsername?: string;
@@ -204,6 +210,8 @@ export async function POST(request: NextRequest) {
         typeof BannerDataSource !== 'string') ||
       (RecommendationDataSource !== undefined &&
         typeof RecommendationDataSource !== 'string') ||
+      (HomepageSections !== undefined &&
+        validateHomepageSections(HomepageSections) !== null) ||
       (LocalSettingsSyncMode !== undefined &&
         LocalSettingsSyncMode !== 'off' &&
         LocalSettingsSyncMode !== 'manual' &&
@@ -253,21 +261,31 @@ export async function POST(request: NextRequest) {
       (OIDCClientSecret !== undefined &&
         typeof OIDCClientSecret !== 'string') ||
       (OIDCButtonText !== undefined && typeof OIDCButtonText !== 'string') ||
-      (OIDCMinTrustLevel !== undefined && typeof OIDCMinTrustLevel !== 'number') ||
-      (AnalyticsEnabled !== undefined && typeof AnalyticsEnabled !== 'boolean') ||
+      (OIDCMinTrustLevel !== undefined &&
+        typeof OIDCMinTrustLevel !== 'number') ||
+      (AnalyticsEnabled !== undefined &&
+        typeof AnalyticsEnabled !== 'boolean') ||
       (AnalyticsProvider !== undefined &&
         AnalyticsProvider !== 'umami' &&
         AnalyticsProvider !== 'google' &&
         AnalyticsProvider !== 'clarity' &&
         AnalyticsProvider !== 'custom') ||
-      (AnalyticsScriptUrl !== undefined && typeof AnalyticsScriptUrl !== 'string') ||
-      (AnalyticsWebsiteId !== undefined && typeof AnalyticsWebsiteId !== 'string') ||
-      (AnalyticsCustomScript !== undefined && typeof AnalyticsCustomScript !== 'string')
+      (AnalyticsScriptUrl !== undefined &&
+        typeof AnalyticsScriptUrl !== 'string') ||
+      (AnalyticsWebsiteId !== undefined &&
+        typeof AnalyticsWebsiteId !== 'string') ||
+      (AnalyticsCustomScript !== undefined &&
+        typeof AnalyticsCustomScript !== 'string')
     ) {
       return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
     }
 
     const adminConfig = await getConfig();
+
+    const homepageSections =
+      HomepageSections === undefined
+        ? adminConfig.SiteConfig.HomepageSections || []
+        : normalizeHomepageSections(HomepageSections);
 
     // 权限校验 - 使用v2用户系统
     if (username !== process.env.USERNAME) {
@@ -306,6 +324,7 @@ export async function POST(request: NextRequest) {
       LiveChartProxy: normalizeApiBaseUrl(LiveChartProxy),
       BannerDataSource,
       RecommendationDataSource,
+      HomepageSections: homepageSections,
       LocalSettingsSyncMode,
       PansouApiUrl: normalizeApiBaseUrl(PansouApiUrl),
       PansouUsername,

@@ -19,8 +19,9 @@ import {
   GetBangumiCalendarData,
 } from '@/lib/bangumi.client';
 import { getDoubanCategories } from '@/lib/douban.client';
+import { normalizeHomepageSections } from '@/lib/homepage-sections';
 import { getTMDBImageUrl, TMDBItem } from '@/lib/tmdb.client';
-import { DoubanItem } from '@/lib/types';
+import { DoubanItem, SearchResult } from '@/lib/types';
 import { base58Encode, processImageUrl } from '@/lib/utils';
 
 import AIChatPanel from '@/components/AIChatPanel';
@@ -49,6 +50,13 @@ function HomeClient() {
   const [hotVarietyShows, setHotVarietyShows] = useState<DoubanItem[]>([]);
   const [hotDuanju, setHotDuanju] = useState<any[]>([]);
   const [upcomingContent, setUpcomingContent] = useState<TMDBItem[]>([]);
+  const [homepageSections, setHomepageSections] = useState(
+    normalizeHomepageSections([])
+  );
+  const [homepageSectionResults, setHomepageSectionResults] = useState<
+    Record<string, SearchResult[]>
+  >({});
+  const [homepageSectionsLoading, setHomepageSectionsLoading] = useState(false);
   const [bangumiCalendarData, setBangumiCalendarData] = useState<
     BangumiCalendarData[]
   >([]);
@@ -297,6 +305,56 @@ function HomeClient() {
         'homeModulesUpdated',
         handleHomeModulesUpdated
       );
+    };
+  }, []);
+
+  // 加载站点管理员配置的首页自定义栏目
+  useEffect(() => {
+    const configuredSections = normalizeHomepageSections(
+      (window as any).RUNTIME_CONFIG?.HOMEPAGE_SECTIONS
+    );
+    setHomepageSections(configuredSections);
+
+    const enabledSections = configuredSections.filter(
+      (section) => section.enabled
+    );
+    if (enabledSections.length === 0) return;
+
+    let cancelled = false;
+    setHomepageSectionsLoading(true);
+
+    const loadSections = async () => {
+      const entries = await Promise.all(
+        enabledSections.map(async (section) => {
+          try {
+            const response = await fetch(
+              `/api/source-search/videos?source=${encodeURIComponent(
+                section.source
+              )}&categoryId=${encodeURIComponent(section.categoryId)}&page=1`
+            );
+            if (!response.ok) return [section.id, []] as const;
+
+            const data = await response.json();
+            const results = Array.isArray(data.results)
+              ? (data.results as SearchResult[]).slice(0, section.limit)
+              : [];
+            return [section.id, results] as const;
+          } catch (error) {
+            console.error(`加载首页栏目失败: ${section.title}`, error);
+            return [section.id, []] as const;
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setHomepageSectionResults(Object.fromEntries(entries));
+        setHomepageSectionsLoading(false);
+      }
+    };
+
+    void loadSections();
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -879,6 +937,53 @@ function HomeClient() {
     }
   };
 
+  const renderHomepageSourceSection = (
+    section: (typeof homepageSections)[number]
+  ) => {
+    const results = homepageSectionResults[section.id] || [];
+    if (!homepageSectionsLoading && results.length === 0) return null;
+
+    return (
+      <section key={`homepage-source-${section.id}`} className='mb-8'>
+        <div className='mb-4 flex items-center justify-between'>
+          <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+            {section.title}
+          </h2>
+        </div>
+        <ScrollableRow>
+          {homepageSectionsLoading && results.length === 0
+            ? Array.from({ length: section.limit }, (_, index) => (
+                <div
+                  key={`homepage-source-skeleton-${section.id}-${index}`}
+                  className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                >
+                  <div className='mb-2 aspect-[2/3] animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700' />
+                  <div className='h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-700' />
+                </div>
+              ))
+            : results.map((item) => (
+                <div
+                  key={`${item.source}-${item.id}`}
+                  className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                >
+                  <VideoCard
+                    id={item.id}
+                    title={item.title}
+                    poster={item.poster}
+                    episodes={item.episodes?.length || 0}
+                    source={item.source}
+                    source_name={item.source_name}
+                    year={item.year}
+                    from='source-search'
+                    type={item.episodes?.length > 1 ? 'tv' : 'movie'}
+                  />
+                </div>
+              ))}
+        </ScrollableRow>
+      </section>
+    );
+  };
+
   return (
     <PageLayout>
       <FireworksCanvas />
@@ -972,6 +1077,11 @@ function HomeClient() {
               .filter((module) => module.enabled)
               .sort((a, b) => a.order - b.order)
               .map((module) => renderModule(module.id))}
+
+            {homepageSections
+              .filter((section) => section.enabled)
+              .sort((a, b) => a.order - b.order)
+              .map(renderHomepageSourceSection)}
           </>
         </div>
       </div>

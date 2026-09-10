@@ -1,3 +1,5 @@
+import type { HomepageSection } from './homepage-sections';
+
 export interface AdminConfig {
   ConfigSubscribtion: {
     URL: string;
@@ -30,17 +32,14 @@ export interface AdminConfig {
     // TMDB 图片默认地址：用户未在本地数据源设置中配置时，图片默认使用该地址
     TMDBImageBaseUrl?: string;
     // 动漫/Bangumi配置
-    BangumiDataSource?:
-      | 'direct'
-      | 'server-proxy'
-      | 'custom-baseurl'
-      | 'sakura';
+    BangumiDataSource?: 'direct' | 'server-proxy' | 'custom-baseurl' | 'sakura';
     BangumiApiBaseUrl?: string;
     BangumiImageBaseUrl?: string;
     BangumiProxy?: string;
     LiveChartProxy?: string;
     BannerDataSource?: string; // 轮播图数据源：TMDB、TX 或 Douban
     RecommendationDataSource?: string; // 更多推荐数据源：Douban、TMDB、Mixed、MixedSmart
+    HomepageSections?: HomepageSection[]; // 首页自定义栏目
     // 本地设置云同步模式：off=关闭，manual=手动（面板右上角备份/恢复按钮），auto=自动（进入网站静默拉取、面板打开静默同步）
     LocalSettingsSyncMode?: 'off' | 'manual' | 'auto';
     // Pansou配置
