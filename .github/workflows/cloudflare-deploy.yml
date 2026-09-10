@@ -77,7 +77,10 @@ jobs:
         run: |
           STORAGE_TYPE="${{ secrets.NEXT_PUBLIC_STORAGE_TYPE }}"
 
-          if [ "$STORAGE_TYPE" != "d1" ]; then
+          if [ -z "$STORAGE_TYPE" ]; then
+            echo "❌ NEXT_PUBLIC_STORAGE_TYPE is not set; refusing to deploy without an explicit storage configuration"
+            exit 1
+          elif [ "$STORAGE_TYPE" != "d1" ]; then
             echo "Storage type is not d1 (current: $STORAGE_TYPE), removing D1 database configuration"
             # Remove the entire [[d1_databases]] section including the comment
             sed -i '/^# D1 数据库绑定$/,/^database_id = .*$/d' wrangler.toml
