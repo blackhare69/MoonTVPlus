@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   HOMEPAGE_SECTION_MAX_LIMIT,
   HomepageSection,
+  HomepageSectionSource,
 } from '@/lib/homepage-sections';
 
 interface ApiSource {
@@ -97,7 +98,9 @@ export default function HomepageSectionsEditor({
   }, []);
 
   useEffect(() => {
-    const sourceKeys = new Set(value.map((section) => section.source));
+    const sourceKeys = new Set(
+      value.flatMap((section) => section.sources.map((item) => item.source))
+    );
     for (const sourceKey of Array.from(sourceKeys)) {
       if (sourceKey && categories[sourceKey] === undefined) {
         void loadCategories(sourceKey);
@@ -113,15 +116,37 @@ export default function HomepageSectionsEditor({
     );
   };
 
-  const handleSourceChange = async (
-    section: HomepageSection,
-    source: string
+  const updateSectionSources = (
+    id: string,
+    nextSources: HomepageSectionSource[]
   ) => {
-    const nextCategories = await loadCategories(source);
-    updateSection(section.id, {
-      source,
-      categoryId: nextCategories[0]?.id || '',
-    });
+    updateSection(id, { sources: nextSources });
+  };
+
+  const handleSourceToggle = async (
+    section: HomepageSection,
+    sourceKey: string
+  ) => {
+    const currentSource = section.sources.find(
+      (item) => item.source === sourceKey
+    );
+    if (currentSource) {
+      if (section.sources.length === 1) {
+        setError('每个栏目至少保留一个播放源。');
+        return;
+      }
+      updateSectionSources(
+        section.id,
+        section.sources.filter((item) => item.source !== sourceKey)
+      );
+      return;
+    }
+
+    await loadCategories(sourceKey);
+    updateSectionSources(section.id, [
+      ...section.sources,
+      { source: sourceKey, categoryId: '' },
+    ]);
   };
 
   const addSection = () => {
@@ -131,19 +156,18 @@ export default function HomepageSectionsEditor({
       return;
     }
 
-    const sourceCategories = categories[source.key] || [];
     onChange([
       ...value,
       {
         id: createSectionId(),
         title: `${source.name}推荐`,
-        source: source.key,
-        categoryId: sourceCategories[0]?.id || '',
+        sources: [{ source: source.key, categoryId: '' }],
         enabled: true,
         order: value.length,
         limit: 12,
       },
     ]);
+    if (categories[source.key] === undefined) void loadCategories(source.key);
   };
 
   const moveSection = (index: number, direction: -1 | 1) => {
@@ -170,7 +194,7 @@ export default function HomepageSectionsEditor({
             首页自定义栏目
           </h4>
           <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-            每个栏目选择一个播放源和分类，保存后对所有访问者生效。
+            每个栏目可勾选多个播放源；分类可分别设置，留空表示该播放源的全部分类。
           </p>
         </div>
         <button
@@ -196,13 +220,9 @@ export default function HomepageSectionsEditor({
         </p>
       ) : (
         value.map((section, index) => {
-          const sourceCategories = categories[section.source] || [];
-          const categoryLoading = loadingCategories[section.source];
-          const hasSavedCategory =
-            section.categoryId &&
-            !sourceCategories.some(
-              (category) => category.id === section.categoryId
-            );
+          const selectedSourceKeys = new Set(
+            section.sources.map((item) => item.source)
+          );
 
           return (
             <div
@@ -279,58 +299,94 @@ export default function HomepageSectionsEditor({
                     className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100'
                   />
                 </label>
+              </div>
 
-                <label className='space-y-1'>
-                  <span className='text-xs font-medium text-gray-600 dark:text-gray-400'>
-                    播放源
-                  </span>
-                  <select
-                    value={section.source}
-                    onChange={(event) =>
-                      void handleSourceChange(section, event.target.value)
-                    }
-                    className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100'
-                  >
-                    {sources.length === 0 && (
-                      <option value={section.source}>{section.source}</option>
-                    )}
-                    {sources.map((source) => (
-                      <option key={source.key} value={source.key}>
-                        {source.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+              <div className='space-y-2'>
+                <span className='text-xs font-medium text-gray-600 dark:text-gray-400'>
+                  播放源（可多选）
+                </span>
+                <div className='grid gap-2 rounded-lg border border-gray-200 bg-white p-3 sm:grid-cols-2 dark:border-gray-600 dark:bg-gray-900'>
+                  {sources.length === 0 && (
+                    <span className='text-sm text-gray-500'>
+                      {section.sources.map((item) => item.source).join(', ')}
+                    </span>
+                  )}
+                  {sources.map((source) => (
+                    <label
+                      key={source.key}
+                      className='inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300'
+                    >
+                      <input
+                        type='checkbox'
+                        checked={selectedSourceKeys.has(source.key)}
+                        onChange={() =>
+                          void handleSourceToggle(section, source.key)
+                        }
+                        className='rounded border-gray-300 text-green-600 focus:ring-green-500'
+                      />
+                      <span>{source.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
 
-                <label className='space-y-1'>
-                  <span className='text-xs font-medium text-gray-600 dark:text-gray-400'>
-                    分类
-                  </span>
-                  <select
-                    value={section.categoryId}
-                    disabled={categoryLoading}
-                    onChange={(event) =>
-                      updateSection(section.id, {
-                        categoryId: event.target.value,
-                      })
-                    }
-                    className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100'
-                  >
-                    {!section.categoryId && (
-                      <option value=''>请选择分类</option>
-                    )}
-                    {hasSavedCategory && (
-                      <option value={section.categoryId}>
-                        已保存分类（{section.categoryId}）
-                      </option>
-                    )}
-                    {sourceCategories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+              <div className='space-y-2'>
+                <span className='text-xs font-medium text-gray-600 dark:text-gray-400'>
+                  各播放源分类（可选）
+                </span>
+                {section.sources.map((sectionSource) => {
+                  const sourceCategories =
+                    categories[sectionSource.source] || [];
+                  const categoryLoading =
+                    loadingCategories[sectionSource.source];
+                  const hasSavedCategory =
+                    sectionSource.categoryId &&
+                    !sourceCategories.some(
+                      (category) => category.id === sectionSource.categoryId
+                    );
+                  const sourceName =
+                    sources.find(
+                      (source) => source.key === sectionSource.source
+                    )?.name || sectionSource.source;
+
+                  return (
+                    <label
+                      key={sectionSource.source}
+                      className='grid gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:items-center'
+                    >
+                      <span className='text-sm text-gray-700 dark:text-gray-300'>
+                        {sourceName}
+                      </span>
+                      <select
+                        value={sectionSource.categoryId}
+                        disabled={categoryLoading}
+                        onChange={(event) =>
+                          updateSectionSources(
+                            section.id,
+                            section.sources.map((item) =>
+                              item.source === sectionSource.source
+                                ? { ...item, categoryId: event.target.value }
+                                : item
+                            )
+                          )
+                        }
+                        className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100'
+                      >
+                        <option value=''>全部分类</option>
+                        {hasSavedCategory && (
+                          <option value={sectionSource.categoryId}>
+                            已保存分类（{sectionSource.categoryId}）
+                          </option>
+                        )}
+                        {sourceCategories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  );
+                })}
               </div>
 
               <label className='inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300'>
@@ -346,12 +402,6 @@ export default function HomepageSectionsEditor({
                 />
                 启用此栏目
               </label>
-
-              {!section.categoryId && (
-                <p className='text-xs text-red-600 dark:text-red-400'>
-                  请为此栏目选择分类后再保存。
-                </p>
-              )}
             </div>
           );
         })

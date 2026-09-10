@@ -1,7 +1,9 @@
 import {
+  mergeHomepageSectionResults,
   normalizeHomepageSections,
   validateHomepageSections,
 } from './homepage-sections';
+import type { SearchResult } from './types';
 
 describe('homepage section configuration', () => {
   it('sorts valid sections and drops invalid entries', () => {
@@ -9,8 +11,7 @@ describe('homepage section configuration', () => {
       {
         id: 'series',
         title: '剧集专区',
-        source: 'source-b',
-        categoryId: '2',
+        sources: [{ source: 'source-b', categoryId: '2' }],
         enabled: true,
         order: 2,
         limit: 12,
@@ -18,8 +19,8 @@ describe('homepage section configuration', () => {
       {
         id: 'missing-category',
         title: '无效栏目',
-        source: 'source-a',
-        categoryId: '',
+        source: '',
+        categoryId: '1',
         enabled: true,
         order: 1,
         limit: 12,
@@ -27,8 +28,10 @@ describe('homepage section configuration', () => {
       {
         id: 'movies',
         title: '电影专区',
-        source: 'source-a',
-        categoryId: '1',
+        sources: [
+          { source: 'source-a', categoryId: '' },
+          { source: 'source-b', categoryId: '1' },
+        ],
         enabled: true,
         order: 1,
         limit: 8,
@@ -36,6 +39,13 @@ describe('homepage section configuration', () => {
     ]);
 
     expect(sections.map((section) => section.id)).toEqual(['movies', 'series']);
+    expect(sections[0].sources).toEqual([
+      { source: 'source-a', categoryId: '' },
+      { source: 'source-b', categoryId: '1' },
+    ]);
+    expect(sections[1].sources).toEqual([
+      { source: 'source-b', categoryId: '2' },
+    ]);
   });
 
   it('rejects duplicate ids and limits outside the supported range', () => {
@@ -44,8 +54,7 @@ describe('homepage section configuration', () => {
         {
           id: 'same',
           title: '栏目一',
-          source: 'source-a',
-          categoryId: '1',
+          sources: [{ source: 'source-a', categoryId: '1' }],
           enabled: true,
           order: 0,
           limit: 12,
@@ -53,8 +62,7 @@ describe('homepage section configuration', () => {
         {
           id: 'same',
           title: '栏目二',
-          source: 'source-b',
-          categoryId: '2',
+          sources: [{ source: 'source-b', categoryId: '2' }],
           enabled: true,
           order: 1,
           limit: 0,
@@ -65,5 +73,49 @@ describe('homepage section configuration', () => {
 
   it('accepts an empty list so the feature can be disabled', () => {
     expect(validateHomepageSections([])).toBeNull();
+  });
+
+  it('keeps legacy single-source sections readable', () => {
+    expect(
+      normalizeHomepageSections([
+        {
+          id: 'legacy',
+          title: '旧栏目',
+          source: 'source-a',
+          categoryId: '3',
+          enabled: true,
+          order: 0,
+          limit: 6,
+        },
+      ])[0].sources
+    ).toEqual([{ source: 'source-a', categoryId: '3' }]);
+  });
+
+  it('merges results from multiple sources, removes duplicate titles, and applies the limit', () => {
+    const result = mergeHomepageSectionResults(
+      [
+        {
+          source: 'source-a',
+          results: [
+            { id: '1', title: '同一部电影', source: 'source-a' },
+            { id: '2', title: '第一部', source: 'source-a' },
+          ] as SearchResult[],
+        },
+        {
+          source: 'source-b',
+          results: [
+            { id: '9', title: '同一部电影', source: 'source-b' },
+            { id: '3', title: '第二部', source: 'source-b' },
+          ] as SearchResult[],
+        },
+      ],
+      3
+    );
+
+    expect(result.map((item) => item.title)).toEqual([
+      '同一部电影',
+      '第一部',
+      '第二部',
+    ]);
   });
 });

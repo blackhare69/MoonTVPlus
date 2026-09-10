@@ -38,22 +38,16 @@ export async function GET(request: NextRequest) {
   const page = searchParams.get('page') || '1';
 
   if (!sourceKey) {
-    return NextResponse.json(
-      { error: '缺少参数: source' },
-      { status: 400 }
-    );
-  }
-
-  if (!categoryId) {
-    return NextResponse.json(
-      { error: '缺少参数: categoryId' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: '缺少参数: source' }, { status: 400 });
   }
 
   try {
-    const includeSpecialSources = request.nextUrl.searchParams.get('special') === '1';
-    const apiSites = await getAvailableApiSites(authInfo.username, includeSpecialSources);
+    const includeSpecialSources =
+      request.nextUrl.searchParams.get('special') === '1';
+    const apiSites = await getAvailableApiSites(
+      authInfo.username,
+      includeSpecialSources
+    );
     const targetSite = apiSites.find((site) => site.key === sourceKey);
 
     if (!targetSite) {
@@ -63,8 +57,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 请求分类视频列表
-    const videoUrl = `${targetSite.api}?ac=videolist&t=${categoryId}&pg=${page}`;
+    // categoryId 为空时请求播放源的全部分类，便于首页自定义栏目合并多个播放源。
+    const videoUrl = `${targetSite.api}?ac=videolist${
+      categoryId ? `&t=${encodeURIComponent(categoryId)}` : ''
+    }&pg=${encodeURIComponent(page)}`;
     const videoResponse = await fetch(videoUrl, {
       headers: API_CONFIG.search.headers,
       signal: AbortSignal.timeout(10000),
@@ -124,9 +120,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Failed to get videos:', error);
-    return NextResponse.json(
-      { error: '获取视频列表失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '获取视频列表失败' }, { status: 500 });
   }
 }

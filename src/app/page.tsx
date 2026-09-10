@@ -19,7 +19,10 @@ import {
   GetBangumiCalendarData,
 } from '@/lib/bangumi.client';
 import { getDoubanCategories } from '@/lib/douban.client';
-import { normalizeHomepageSections } from '@/lib/homepage-sections';
+import {
+  mergeHomepageSectionResults,
+  normalizeHomepageSections,
+} from '@/lib/homepage-sections';
 import { getTMDBImageUrl, TMDBItem } from '@/lib/tmdb.client';
 import { DoubanItem, SearchResult } from '@/lib/types';
 import { base58Encode, processImageUrl } from '@/lib/utils';
@@ -326,23 +329,45 @@ function HomeClient() {
     const loadSections = async () => {
       const entries = await Promise.all(
         enabledSections.map(async (section) => {
-          try {
-            const response = await fetch(
-              `/api/source-search/videos?source=${encodeURIComponent(
-                section.source
-              )}&categoryId=${encodeURIComponent(section.categoryId)}&page=1`
-            );
-            if (!response.ok) return [section.id, []] as const;
+          const sourceResults = await Promise.all(
+            section.sources.map(async (sectionSource) => {
+              try {
+                const params = new URLSearchParams({
+                  source: sectionSource.source,
+                  page: '1',
+                });
+                if (sectionSource.categoryId) {
+                  params.set('categoryId', sectionSource.categoryId);
+                }
 
-            const data = await response.json();
-            const results = Array.isArray(data.results)
-              ? (data.results as SearchResult[]).slice(0, section.limit)
-              : [];
-            return [section.id, results] as const;
-          } catch (error) {
-            console.error(`加载首页栏目失败: ${section.title}`, error);
-            return [section.id, []] as const;
-          }
+                const response = await fetch(
+                  `/api/source-search/videos?${params.toString()}`
+                );
+                if (!response.ok) {
+                  return { source: sectionSource.source, results: [] };
+                }
+
+                const data = await response.json();
+                return {
+                  source: sectionSource.source,
+                  results: Array.isArray(data.results)
+                    ? (data.results as SearchResult[])
+                    : [],
+                };
+              } catch (error) {
+                console.error(
+                  `加载首页栏目播放源失败: ${sectionSource.source}`,
+                  error
+                );
+                return { source: sectionSource.source, results: [] };
+              }
+            })
+          );
+
+          return [
+            section.id,
+            mergeHomepageSectionResults(sourceResults, section.limit),
+          ] as const;
         })
       );
 

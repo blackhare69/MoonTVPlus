@@ -72,7 +72,10 @@ import { createPortal } from 'react-dom';
 import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { BookSource } from '@/lib/book.types';
-import type { HomepageSection } from '@/lib/homepage-sections';
+import {
+  normalizeHomepageSections,
+  type HomepageSection,
+} from '@/lib/homepage-sections';
 import {
   ALL_FEATURE_PERMISSION_KEYS,
   FEATURE_PERMISSION_OPTIONS,
@@ -10855,7 +10858,9 @@ const SiteConfigComponent = ({
         BannerDataSource: config.SiteConfig.BannerDataSource || 'Douban',
         RecommendationDataSource:
           config.SiteConfig.RecommendationDataSource || 'Mixed',
-        HomepageSections: config.SiteConfig.HomepageSections || [],
+        HomepageSections: normalizeHomepageSections(
+          config.SiteConfig.HomepageSections
+        ),
         LocalSettingsSyncMode: config.SiteConfig.LocalSettingsSyncMode || 'off',
         PansouApiUrl: config.SiteConfig.PansouApiUrl || '',
         PansouUsername: config.SiteConfig.PansouUsername || '',
