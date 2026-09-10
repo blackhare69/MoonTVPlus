@@ -24,7 +24,9 @@ export async function middleware(request: NextRequest) {
   if (!process.env.PASSWORD) {
     // 如果未配置密码，重定向到警告页面
     const warningUrl = new URL('/warning', request.url);
-    return warningUrl.pathname === pathname ? NextResponse.next() : NextResponse.redirect(warningUrl);
+    return warningUrl.pathname === pathname
+      ? NextResponse.next()
+      : NextResponse.redirect(warningUrl);
   }
 
   // 从cookie获取认证信息
@@ -44,13 +46,20 @@ export async function middleware(request: NextRequest) {
 
   // 其他模式：验证签名和时间戳，支持自动续期
   // 检查是否有用户名（非localStorage模式下密码不存储在cookie中）
-  if (!authInfo.username || !authInfo.role || !authInfo.signature || !authInfo.timestamp) {
+  if (
+    !authInfo.username ||
+    !authInfo.role ||
+    !authInfo.signature ||
+    !authInfo.timestamp
+  ) {
     return handleAuthFailure(request, pathname);
   }
 
   // 强制要求新版 Cookie（必须包含 tokenId 和 refreshToken）
   if (!authInfo.tokenId || !authInfo.refreshToken || !authInfo.refreshExpires) {
-    console.log(`Old cookie format detected for ${authInfo.username}, forcing re-login`);
+    console.log(
+      `Old cookie format detected for ${authInfo.username}, forcing re-login`
+    );
     return handleAuthFailure(request, pathname);
   }
 
@@ -61,7 +70,9 @@ export async function middleware(request: NextRequest) {
 
   // 先检查 Refresh Token 是否过期
   if (now >= authInfo.refreshExpires) {
-    console.log(`Refresh token expired for ${authInfo.username}, redirecting to login`);
+    console.log(
+      `Refresh token expired for ${authInfo.username}, redirecting to login`
+    );
     return handleAuthFailure(request, pathname);
   }
 
@@ -115,7 +126,7 @@ async function verifySignature(
   const dataToSign = JSON.stringify({
     username,
     role,
-    timestamp
+    timestamp,
   });
   const messageData = encoder.encode(dataToSign);
 
@@ -175,18 +186,24 @@ function shouldSkipAuth(pathname: string): boolean {
     '/icons/',
     '/logo.png',
     '/screenshot.png',
+    '/api/tmdb-proxy',
+    '/api/tmdb-image-proxy',
   ];
 
   return skipPaths.some((path) => pathname.startsWith(path));
 }
 
 function isTVModePath(pathname: string): boolean {
-  return pathname === '/tv' || pathname.startsWith('/tv/') || pathname.startsWith('/api/tv-remote/');
+  return (
+    pathname === '/tv' ||
+    pathname.startsWith('/tv/') ||
+    pathname.startsWith('/api/tv-remote/')
+  );
 }
 
 // 配置middleware匹配规则
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|login|register|oidc-register|qr-login|warning|tv/login|api/login|api/register|api/logout|api/auth/oidc|api/auth/qr|api/auth/refresh|api/telegram/login|api/telegram/config|api/telegram/webhook|api/cron/|api/server-config|api/proxy-m3u8|api/cms-proxy|api/tvbox/subscribe|api/theme/css|api/openlist/cms-proxy|api/openlist/play|api/openlist/proxy|api/emby/cms-proxy|api/emby/play|api/emby/subtitle|api/emby/sources|tvbox/).*)',
+    '/((?!_next/static|_next/image|favicon.ico|login|register|oidc-register|qr-login|warning|tv/login|api/login|api/register|api/logout|api/auth/oidc|api/auth/qr|api/auth/refresh|api/telegram/login|api/telegram/config|api/telegram/webhook|api/cron/|api/server-config|api/proxy-m3u8|api/tmdb-proxy|api/tmdb-image-proxy|api/cms-proxy|api/tvbox/subscribe|api/theme/css|api/openlist/cms-proxy|api/openlist/play|api/openlist/proxy|api/emby/cms-proxy|api/emby/play|api/emby/subtitle|api/emby/sources|tvbox/).*)',
   ],
 };
